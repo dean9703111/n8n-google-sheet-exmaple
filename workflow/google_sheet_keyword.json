@@ -1,0 +1,743 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        620,
+        20
+      ],
+      "id": "d9e7b32d-f5a7-4172-aa28-6deae6323e01",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('set_static_variables').item.json.google_sheet_url }}",
+          "mode": "url"
+        },
+        "title": "={{ $('get_key_words').item.json.keyword }}",
+        "options": {
+          "tabColor": "0aa55c"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1520,
+        40
+      ],
+      "id": "5c635e65-e889-4e10-8c42-87809b8fdb8d",
+      "name": "create_sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "izrAu0TLjfaiadEk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('set_static_variables').item.json.google_sheet_url }}",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('set_static_variables').item.json.keyword_sheet_name }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1060,
+        20
+      ],
+      "id": "36367385-12c8-4e50-83f5-be3f8bdd18e0",
+      "name": "get_key_words",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "izrAu0TLjfaiadEk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://suggestqueries.google.com/complete/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "client",
+              "value": "firefox"
+            },
+            {
+              "name": "q",
+              "value": "={{ $('get_key_words').item.json.keyword }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        40
+      ],
+      "id": "5860b7d8-f14a-4e3b-8530-9aae052fcab7",
+      "name": "query_key_words_1st"
+    },
+    {
+      "parameters": {
+        "url": "https://suggestqueries.google.com/complete/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "client",
+              "value": "firefox"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.values()[0] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        420
+      ],
+      "id": "f96f13a7-60b2-40ae-bf8a-5bacb852616d",
+      "name": "query_key_words_2nd"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 從 $input 取得資料\nconst inputData = $input.all()[0].json.data;\n\n// 解析 JSON 字串\nconst parsedData = JSON.parse(inputData);\n\n// 提取原本關鍵字\nconst orgKeyword = parsedData[0];\n\n// 提取所需的關鍵字陣列\nconst keywords = parsedData[1];\n\n// 將關鍵字轉換為指定的結構\nconst result = keywords\n  .filter(keyword => orgKeyword !== keyword) // 過濾掉 key 和 value 相同的情況\n  .map(keyword => ({ [orgKeyword]: keyword }));\n\n// 返回結果供下一步使用\nreturn result;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        40
+      ],
+      "id": "3f98d525-05bd-449e-b295-db8e93d56f2e",
+      "name": "format_query_result"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1260,
+        20
+      ],
+      "id": "ed5589a0-675b-488b-b537-78d2c40991ef",
+      "name": "loop_key_words_1st"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": "={{ $prevNode.name === 'reset_with_runtimes' }}"
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1380,
+        300
+      ],
+      "id": "72213f9f-4457-459f-a550-8e8f1adc3711",
+      "name": "loop_key_words_2nd",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// 取得輸入資料\nconst items = $input.all();\nlet newItems = [];\nfor (const item of items) {\n  if (item.json.result && Array.isArray(item.json.result)) {\n    for (const value of item.json.result) {\n      newItems.push({ json: { value } });\n    }\n  }\n}\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        260
+      ],
+      "id": "afc3b649-0669-4af3-9570-a2cf78eb60be",
+      "name": "split_to_items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.last().json[\"value\"].reduce((acc, item) => {\n    if (item && typeof item === \"object\") { // 確保 item 是有效物件\n        const key = Object.keys(item)[0]; // 獲取每個物件的 key\n        const value = item[key];         // 獲取每個物件的 value\n        if (!acc[0]) {                   // 初始化累加器中的物件\n            acc[0] = {};\n        }\n        if (value !== undefined) {       // 確保 value 是有效的\n            acc[0][key] = value;         // 將 key-value 加入結果中\n        }\n    }\n    return acc; // 無論是否處理了 item，均返回累加結果\n}, [{}]);\n\nconsole.log(output);\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        320
+      ],
+      "id": "6a90d6e6-1143-490b-aa05-70db267e9f60",
+      "name": "remove_undefined_key"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('set_static_variables').first().json.google_sheet_url }}",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('create_sheet').first().json.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "健身工廠",
+              "displayName": "健身工廠",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身房",
+              "displayName": "健身房",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身工廠費用",
+              "displayName": "健身工廠費用",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身器材",
+              "displayName": "健身器材",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身房費用",
+              "displayName": "健身房費用",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身 英文",
+              "displayName": "健身 英文",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身環",
+              "displayName": "健身環",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身教練",
+              "displayName": "健身教練",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "健身教練證照",
+              "displayName": "健身教練證照",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2940,
+        320
+      ],
+      "id": "3b62b065-4dab-4d2c-988b-8e58a3ce3d17",
+      "name": "append_row_data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "izrAu0TLjfaiadEk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": "={{ $prevNode.name === 'reset_with_even_runtimes' }}"
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2480,
+        240
+      ],
+      "id": "ca9f7032-c9f4-4b6c-971d-2c71c109114c",
+      "name": "loop_append_row_data",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0f23e173-d053-430d-a03b-226ef34b5154",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": "={{ $('get_key_words').all().length }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        320
+      ],
+      "id": "dfbb3db9-d66d-4988-a15b-c69801e56511",
+      "name": "reset_with_runtimes"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d922d404-8c3d-42e3-a5dd-f9cc84492f6b",
+              "leftValue": "={{ $runIndex % 2 }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2160,
+        260
+      ],
+      "id": "5dbc5dda-207a-44c6-b746-f77e1e7092f6",
+      "name": "reset_with_even_runtimes"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4eacc541-e52d-47c9-b15b-e6dc313befce",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": "={{ $('get_key_words').all().length - 1 }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2600,
+        560
+      ],
+      "id": "c8663f36-0644-43c7-ada1-8c7049a0fd54",
+      "name": "skip_last_runtime"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2900,
+        540
+      ],
+      "id": "6c840e72-d9bb-4203-834a-c308180a742e",
+      "name": "wait_15s",
+      "webhookId": "75b97159-e184-403d-8c3e-36e0df4980c0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fe95e2e2-7fbb-4756-817c-dd5fa654ee3a",
+              "name": "google_sheet_url",
+              "value": "Paste your google sheet url",
+              "type": "string"
+            },
+            {
+              "id": "d00fbdbf-8cdf-4886-868b-47497277ba16",
+              "name": "keyword_sheet_name",
+              "value": "工作表1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        840,
+        20
+      ],
+      "id": "a998b18c-3ccc-40d5-bbae-76d9b25d4bef",
+      "name": "set_static_variables"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 從 $input 取得資料\nconst inputData = $input.all()[0].json.data;\n\n// 解析 JSON 字串\nconst parsedData = JSON.parse(inputData);\n\n// 提取原本關鍵字\nconst orgKeyword = parsedData[0];\n\n// 提取所需的關鍵字陣列\nconst keywords = parsedData[1];\n\n// 將關鍵字轉換為指定的結構\nconst result = keywords\n  .filter(keyword => orgKeyword !== keyword)\n  .map(keyword => ({ [orgKeyword]: keyword }));\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        480
+      ],
+      "id": "44385427-05a2-4ead-bd5d-99aedf964b34",
+      "name": "format_query_result2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 原始資料\nconst items = $input.all();\nconst changeFormat = items.map(item => item.json);\n\n// 收集所有的 key 值\nconst keys = [...new Set(changeFormat.map(item => Object.keys(item)[0]))];\n\n// 按 key 分組，將相同 key 的值放在相同位置的陣列中\nconst groupedData = keys.map((key) => {\n    return changeFormat\n        .filter(item => Object.keys(item)[0] === key)\n        .map(item => ({ [key]: Object.values(item)[0] }));\n});\n\n// 將資料進行列對齊轉換\nconst result = [];\nfor (let i = 0; i < groupedData[0].length; i++) {\n    const row = groupedData.map(group => group[i]);\n    result.push(row);\n}\n\nreturn [{result}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        260
+      ],
+      "id": "bd06258a-b6aa-41dd-bb4d-7a377d1b69d0",
+      "name": "group_keys"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "set_static_variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sheet": {
+      "main": [
+        [
+          {
+            "node": "query_key_words_1st",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_key_words": {
+      "main": [
+        [
+          {
+            "node": "loop_key_words_1st",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "query_key_words_1st": {
+      "main": [
+        [
+          {
+            "node": "format_query_result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "query_key_words_2nd": {
+      "main": [
+        [
+          {
+            "node": "format_query_result2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "format_query_result": {
+      "main": [
+        [
+          {
+            "node": "reset_with_runtimes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop_key_words_1st": {
+      "main": [
+        [],
+        [
+          {
+            "node": "create_sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop_key_words_2nd": {
+      "main": [
+        [
+          {
+            "node": "group_keys",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "reset_with_runtimes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "query_key_words_2nd",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split_to_items": {
+      "main": [
+        [
+          {
+            "node": "reset_with_even_runtimes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "remove_undefined_key": {
+      "main": [
+        [
+          {
+            "node": "append_row_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "append_row_data": {
+      "main": [
+        [
+          {
+            "node": "loop_append_row_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop_append_row_data": {
+      "main": [
+        [
+          {
+            "node": "reset_with_even_runtimes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "skip_last_runtime",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "remove_undefined_key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reset_with_runtimes": {
+      "main": [
+        [
+          {
+            "node": "loop_key_words_2nd",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reset_with_even_runtimes": {
+      "main": [
+        [
+          {
+            "node": "loop_append_row_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "skip_last_runtime": {
+      "main": [
+        [
+          {
+            "node": "wait_15s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "wait_15s": {
+      "main": [
+        [
+          {
+            "node": "loop_key_words_1st",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_static_variables": {
+      "main": [
+        [
+          {
+            "node": "get_key_words",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "format_query_result2": {
+      "main": [
+        [
+          {
+            "node": "loop_key_words_2nd",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "group_keys": {
+      "main": [
+        [
+          {
+            "node": "split_to_items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

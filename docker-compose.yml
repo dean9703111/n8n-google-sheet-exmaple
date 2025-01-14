@@ -1,0 +1,11 @@
+volumes:
+  n8n_storage:
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    ports:
+      - "127.0.0.1:5678:5678" # 根據實際需求設定
+    volumes:
+      - n8n_storage:/home/node/.n8n
