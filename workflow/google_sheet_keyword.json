@@ -5,10 +5,10 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        620,
-        20
+        -180,
+        -280
       ],
-      "id": "d9e7b32d-f5a7-4172-aa28-6deae6323e01",
+      "id": "951c0446-573a-4216-8dd9-3830fdf48c1f",
       "name": "When clicking ‘Test workflow’"
     },
     {
@@ -27,10 +27,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1520,
-        40
+        780,
+        -260
       ],
-      "id": "5c635e65-e889-4e10-8c42-87809b8fdb8d",
+      "id": "6c39c936-c742-4458-baf9-e8b1b81654ab",
       "name": "create_sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -56,10 +56,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1060,
-        20
+        260,
+        -280
       ],
-      "id": "36367385-12c8-4e50-83f5-be3f8bdd18e0",
+      "id": "686e9dd3-2e71-4b3b-b15a-5109de82aac5",
       "name": "get_key_words",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -80,7 +80,15 @@
             },
             {
               "name": "q",
-              "value": "={{ $('get_key_words').item.json.keyword }}"
+              "value": "={{ $('loop_key_words_1st').item.json.keyword }}"
+            },
+            {
+              "name": "hl",
+              "value": "zh-TW"
+            },
+            {
+              "name": "oe",
+              "value": "utf8"
             }
           ]
         },
@@ -89,10 +97,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1740,
-        40
+        1000,
+        -260
       ],
-      "id": "5860b7d8-f14a-4e3b-8530-9aae052fcab7",
+      "id": "1ceb2f02-7025-40ef-987a-75d980d54c39",
       "name": "query_key_words_1st"
     },
     {
@@ -108,6 +116,14 @@
             {
               "name": "q",
               "value": "={{ $json.values()[0] }}"
+            },
+            {
+              "name": "hl",
+              "value": "zh-TW"
+            },
+            {
+              "name": "oe",
+              "value": "utf8"
             }
           ]
         },
@@ -116,23 +132,23 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1700,
-        420
+        820,
+        220
       ],
-      "id": "f96f13a7-60b2-40ae-bf8a-5bacb852616d",
+      "id": "c0400fbd-83b8-471d-a644-0876b7237abc",
       "name": "query_key_words_2nd"
     },
     {
       "parameters": {
-        "jsCode": "// 從 $input 取得資料\nconst inputData = $input.all()[0].json.data;\n\n// 解析 JSON 字串\nconst parsedData = JSON.parse(inputData);\n\n// 提取原本關鍵字\nconst orgKeyword = parsedData[0];\n\n// 提取所需的關鍵字陣列\nconst keywords = parsedData[1];\n\n// 將關鍵字轉換為指定的結構\nconst result = keywords\n  .filter(keyword => orgKeyword !== keyword) // 過濾掉 key 和 value 相同的情況\n  .map(keyword => ({ [orgKeyword]: keyword }));\n\n// 返回結果供下一步使用\nreturn result;\n"
+        "jsCode": "// 從 $input 取得資料\nconst inputData = $input.all()[0].json.data;\n\n// 解析 JSON 字串\nconst parsedData = JSON.parse(inputData);\n\n// 提取原本關鍵字\nconst orgKeyword = parsedData[0];\n\n// 提取所需的關鍵字陣列\nconst keywords = parsedData[1];\n\n// 先過濾\nconst filteredKeywords = keywords.filter(keyword => orgKeyword !== keyword);\n\nif (filteredKeywords.length === 0) {\n    // 如果沒有可用的關鍵字，就回傳空的資訊\n    return [{}]\n}\n\n// 將關鍵字轉換為指定的結構\nconst result = filteredKeywords.map(keyword => ({ [orgKeyword]: keyword }));\n\nreturn result;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1980,
-        40
+        1220,
+        -260
       ],
-      "id": "3f98d525-05bd-449e-b295-db8e93d56f2e",
+      "id": "131079c0-2974-457f-abbb-b893b68604c9",
       "name": "format_query_result"
     },
     {
@@ -142,10 +158,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1260,
-        20
+        520,
+        -280
       ],
-      "id": "ed5589a0-675b-488b-b537-78d2c40991ef",
+      "id": "a2ac407c-0ea7-43ae-a6d4-d81655cf7f20",
       "name": "loop_key_words_1st"
     },
     {
@@ -157,10 +173,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1380,
-        300
+        200,
+        80
       ],
-      "id": "72213f9f-4457-459f-a550-8e8f1adc3711",
+      "id": "a7a2dbaf-3fc1-498c-be95-2f1299839925",
       "name": "loop_key_words_2nd",
       "executeOnce": false
     },
@@ -171,10 +187,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1900,
-        260
+        820,
+        20
       ],
-      "id": "afc3b649-0669-4af3-9570-a2cf78eb60be",
+      "id": "9cc8b12e-d6d6-4373-a116-937cb6aa3347",
       "name": "split_to_items"
     },
     {
@@ -184,10 +200,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2720,
-        320
+        1660,
+        80
       ],
-      "id": "6a90d6e6-1143-490b-aa05-70db267e9f60",
+      "id": "b1dc217b-144f-48a4-8e72-e7ac18ea750e",
       "name": "remove_undefined_key"
     },
     {
@@ -305,10 +321,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        2940,
-        320
+        2300,
+        120
       ],
-      "id": "3b62b065-4dab-4d2c-988b-8e58a3ce3d17",
+      "id": "c9cc271e-6e0f-49a3-9593-a5a574e788a8",
       "name": "append_row_data",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -326,10 +342,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2480,
-        240
+        1380,
+        0
       ],
-      "id": "ca9f7032-c9f4-4b6c-971d-2c71c109114c",
+      "id": "3ab01dde-5579-482d-9f5a-6618a59de666",
       "name": "loop_append_row_data",
       "executeOnce": false
     },
@@ -360,10 +376,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        940,
-        320
+        -60,
+        100
       ],
-      "id": "dfbb3db9-d66d-4988-a15b-c69801e56511",
+      "id": "a7d29051-a3c9-42b1-ab97-427f5f69f62a",
       "name": "reset_with_runtimes"
     },
     {
@@ -393,10 +409,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2160,
-        260
+        1060,
+        20
       ],
-      "id": "5dbc5dda-207a-44c6-b746-f77e1e7092f6",
+      "id": "02a54d13-ee9d-4f86-a364-1e66905837a4",
       "name": "reset_with_even_runtimes"
     },
     {
@@ -426,25 +442,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2600,
-        560
+        1880,
+        320
       ],
-      "id": "c8663f36-0644-43c7-ada1-8c7049a0fd54",
+      "id": "60236516-a9ee-4c83-a93c-8bc930838ef7",
       "name": "skip_last_runtime"
-    },
-    {
-      "parameters": {
-        "amount": 15
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        2900,
-        540
-      ],
-      "id": "6c840e72-d9bb-4203-834a-c308180a742e",
-      "name": "wait_15s",
-      "webhookId": "75b97159-e184-403d-8c3e-36e0df4980c0"
     },
     {
       "parameters": {
@@ -469,23 +471,23 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        840,
-        20
+        40,
+        -280
       ],
-      "id": "a998b18c-3ccc-40d5-bbae-76d9b25d4bef",
+      "id": "ed9dbd1c-4dd6-4e56-9317-7562a4d1565a",
       "name": "set_static_variables"
     },
     {
       "parameters": {
-        "jsCode": "// 從 $input 取得資料\nconst inputData = $input.all()[0].json.data;\n\n// 解析 JSON 字串\nconst parsedData = JSON.parse(inputData);\n\n// 提取原本關鍵字\nconst orgKeyword = parsedData[0];\n\n// 提取所需的關鍵字陣列\nconst keywords = parsedData[1];\n\n// 將關鍵字轉換為指定的結構\nconst result = keywords\n  .filter(keyword => orgKeyword !== keyword)\n  .map(keyword => ({ [orgKeyword]: keyword }));\n\nreturn result;"
+        "jsCode": "// 從 $input 取得資料\nconst inputData = $input.all()[0].json.data;\n\n// 解析 JSON 字串\nconst parsedData = JSON.parse(inputData);\n\n// 提取原本關鍵字\nconst orgKeyword = parsedData[0];\n\n// 提取所需的關鍵字陣列\nconst keywords = parsedData[1];\n\n// 先過濾\nconst filteredKeywords = keywords.filter(keyword => orgKeyword !== keyword);\n\nif (filteredKeywords.length === 0) {\n    // 如果沒有可用的關鍵字，就回傳空的資訊\n    return [{}]\n}\n\n// 將關鍵字轉換為指定的結構\nconst result = filteredKeywords.map(keyword => ({ [orgKeyword]: keyword }));\n\nreturn result;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1900,
-        480
+        1060,
+        260
       ],
-      "id": "44385427-05a2-4ead-bd5d-99aedf964b34",
+      "id": "aaa092bf-660a-4fd0-8333-fd97b3c24e5b",
       "name": "format_query_result2",
       "alwaysOutputData": true
     },
@@ -496,11 +498,91 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1700,
-        260
+        580,
+        20
       ],
-      "id": "bd06258a-b6aa-41dd-bb4d-7a377d1b69d0",
+      "id": "5d31a9e0-f56d-4bc5-b1b0-0bc586026413",
       "name": "group_keys"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3944901d-f440-4370-860e-2953f93b9c05",
+              "leftValue": "={{ $json.keys().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        580,
+        200
+      ],
+      "id": "a301395b-a4dc-4821-bc09-cc4ef84728e6",
+      "name": "check_keyword_2nd_has_value"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "32cb7dec-8421-4c7b-ba4c-8fa5b75114f8",
+              "leftValue": "={{ $json.keys().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1880,
+        80
+      ],
+      "id": "fe701b55-d83d-44d1-a7c2-de95191bfca1",
+      "name": "check_key_length"
+    },
+    {
+      "parameters": {
+        "amount": 2.5
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2100,
+        100
+      ],
+      "id": "b09f720f-2c5d-481d-b073-984f5058ccbe",
+      "name": "wait_2.5s",
+      "webhookId": "75b97159-e184-403d-8c3e-36e0df4980c0"
     }
   ],
   "connections": {
@@ -598,7 +680,7 @@
         ],
         [
           {
-            "node": "query_key_words_2nd",
+            "node": "check_keyword_2nd_has_value",
             "type": "main",
             "index": 0
           }
@@ -620,7 +702,7 @@
       "main": [
         [
           {
-            "node": "append_row_data",
+            "node": "check_key_length",
             "type": "main",
             "index": 0
           }
@@ -687,17 +769,6 @@
       "main": [
         [
           {
-            "node": "wait_15s",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "wait_15s": {
-      "main": [
-        [
-          {
             "node": "loop_key_words_1st",
             "type": "main",
             "index": 0
@@ -732,6 +803,53 @@
         [
           {
             "node": "split_to_items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_keyword_2nd_has_value": {
+      "main": [
+        [
+          {
+            "node": "query_key_words_2nd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "loop_key_words_2nd",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_key_length": {
+      "main": [
+        [
+          {
+            "node": "wait_2.5s",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "loop_append_row_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "wait_2.5s": {
+      "main": [
+        [
+          {
+            "node": "append_row_data",
             "type": "main",
             "index": 0
           }
