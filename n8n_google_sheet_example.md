@@ -25,9 +25,11 @@
 
 **STEP 6**: 最後透過迴圈（loop_append_row_data）過濾掉無法寫入的值（remove_undefined_key），先等待 2.5 秒（wait_2.5s），再逐行寫入 Google Sheet（append_row_data），避免太頻繁呼叫 API。
 
-備註1: reset_with_runtimes、reset_with_even_runtimes 這兩個節點（Node），是為了在 Done 的情境下 Reset Loop Over Items 重複執行時累計的資料。
+**STEP 7**: 完成這一切後，判斷是否為最後一次執行（skip_last_runtime），如果是最後一次就終止迴圈。
 
-備註2: check_keyword_2nd_has_value、check_key_length 是為了處理空陣列的情境。
+**備註1**: reset_with_runtimes、reset_with_even_runtimes 這兩個節點（Node），是為了在 Done 的情境下 Reset Loop Over Items 重複執行時累計的資料。
+
+**備註2**: check_keyword_2nd_has_value、check_key_length 是為了處理空陣列的情境。
 
 ## ▋ 如何使用這個 n8n 的工作流（Workflow）
 
